@@ -2,7 +2,7 @@
 
 Inspired by: [Corner Time](https://cornertime.app/en)
 
-![[./assets/demo.gif]]
+![Demo](./assets/demo.gif)
 
 ## QuickStart
 
