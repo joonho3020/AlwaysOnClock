@@ -5,8 +5,7 @@ class ClockViewModel: ObservableObject {
     @Published var currentTime = Date()
     @Published var timeFormat: TimeFormat = .twelveHour
     @Published var showSeconds: Bool = false
-    @Published var showDate: Bool = false
-    @Published var showDayOfWeek: Bool = false
+    @Published var showDate: Bool = true
     @Published var customFormat: String = ""
     @Published var useCustomFormat: Bool = false
     @Published var selectedFont: ClockFont = .system
@@ -82,12 +81,8 @@ class ClockViewModel: ObservableObject {
         } else {
             var formatString = ""
             
-            if showDayOfWeek {
-                formatString += "EEEE "
-            }
-            
             if showDate {
-                formatString += "MMM d "
+                formatString += "E MMM d "
             }
             
             switch timeFormat {
@@ -96,6 +91,8 @@ class ClockViewModel: ObservableObject {
             case .twentyFourHour:
                 formatString += showSeconds ? "HH:mm:ss" : "HH:mm"
             }
+
+            // print("formatString: \(formatString)")
             
             formatter.dateFormat = formatString.trimmingCharacters(in: .whitespaces)
         }
@@ -113,7 +110,6 @@ class ClockViewModel: ObservableObject {
         
         showSeconds = defaults.object(forKey: "showSeconds") as? Bool ?? false
         showDate = defaults.object(forKey: "showDate") as? Bool ?? true
-        showDayOfWeek = defaults.object(forKey: "showDayOfWeek") as? Bool ?? true
         customFormat = defaults.object(forKey: "customFormat") as? String ?? ""
         useCustomFormat = defaults.object(forKey: "useCustomFormat") as? Bool ?? false
         
@@ -134,7 +130,6 @@ class ClockViewModel: ObservableObject {
         defaults.set(timeFormat.rawValue, forKey: "timeFormat")
         defaults.set(showSeconds, forKey: "showSeconds")
         defaults.set(showDate, forKey: "showDate")
-        defaults.set(showDayOfWeek, forKey: "showDayOfWeek")
         defaults.set(customFormat, forKey: "customFormat")
         defaults.set(useCustomFormat, forKey: "useCustomFormat")
         defaults.set(selectedFont.rawValue, forKey: "selectedFont")

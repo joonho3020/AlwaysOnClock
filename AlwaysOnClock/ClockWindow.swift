@@ -78,7 +78,7 @@ class ClockNSWindow: NSWindow {
 
     private func setupFullscreenMonitoring() {
         // Check fullscreen state every 0.5 seconds
-        fullscreenCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+        fullscreenCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { [weak self] _ in
             self?.updateWindowVisibility()
         }
     }

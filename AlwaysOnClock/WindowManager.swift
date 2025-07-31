@@ -42,7 +42,7 @@ class WindowManager: ObservableObject {
                     print("menuBarOverlay")
                     // We must receive the full frame, not visibleFrame!
                     let rightPadding: CGFloat = 5
-                    let verticalOffset: CGFloat = 3
+                    let verticalOffset: CGFloat = 4
                     print("rightPadding: \(rightPadding)")
                     print("verticalOffset: \(verticalOffset)")  
                     return NSPoint(
@@ -103,7 +103,7 @@ class WindowManager: ObservableObject {
         // let screenFrame = screen.frame
 
         // Size to match menu bar clock dimensions
-        let windowSize = CGSize(width: 110, height: 30)
+        let windowSize = CGSize(width: 150, height: 30)
         
         let origin = displaySetting.position.calculateOrigin(
             for: screenFrame,

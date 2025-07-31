@@ -107,7 +107,6 @@ struct FormatSettingsView: View {
             Section("Display Options") {
                 Toggle("Show Seconds", isOn: $clockViewModel.showSeconds)
                 Toggle("Show Date", isOn: $clockViewModel.showDate)
-                Toggle("Show Day of Week", isOn: $clockViewModel.showDayOfWeek)
             }
             
             Section("Preview") {
@@ -127,7 +126,6 @@ struct FormatSettingsView: View {
         .onChange(of: clockViewModel.timeFormat) { _ in clockViewModel.savePreferences() }
         .onChange(of: clockViewModel.showSeconds) { _ in clockViewModel.savePreferences() }
         .onChange(of: clockViewModel.showDate) { _ in clockViewModel.savePreferences() }
-        .onChange(of: clockViewModel.showDayOfWeek) { _ in clockViewModel.savePreferences() }
     }
 }
 
