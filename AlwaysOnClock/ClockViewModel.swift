@@ -4,18 +4,18 @@ import SwiftUI
 class ClockViewModel: ObservableObject {
     @Published var currentTime = Date()
     @Published var timeFormat: TimeFormat = .twelveHour
-    @Published var showSeconds: Bool = true
+    @Published var showSeconds: Bool = false
     @Published var showDate: Bool = false
     @Published var showDayOfWeek: Bool = false
     @Published var customFormat: String = ""
     @Published var useCustomFormat: Bool = false
     @Published var selectedFont: ClockFont = .sfPro
-    @Published var fontSize: Double = 16
-    @Published var textColor: Color = .primary
+    @Published var fontSize: Double = 11
+    @Published var textColor: Color = .white
     @Published var backgroundColor: Color = .clear
-    @Published var cornerRadius: Double = 8
-    @Published var padding: Double = 8
-    @Published var opacity: Double = 0.9
+    @Published var cornerRadius: Double = 0
+    @Published var padding: Double = 4
+    @Published var opacity: Double = 0.0
     
     private var timer: Timer?
     
@@ -111,8 +111,8 @@ class ClockViewModel: ObservableObject {
             timeFormat = format
         }
         
-        showSeconds = defaults.object(forKey: "showSeconds") as? Bool ?? true
-        showDate = defaults.object(forKey: "showDate") as? Bool ?? false
+        showSeconds = defaults.object(forKey: "showSeconds") as? Bool ?? false
+        showDate = defaults.object(forKey: "showDate") as? Bool ?? true
         showDayOfWeek = defaults.object(forKey: "showDayOfWeek") as? Bool ?? false
         customFormat = defaults.object(forKey: "customFormat") as? String ?? ""
         useCustomFormat = defaults.object(forKey: "useCustomFormat") as? Bool ?? false
@@ -122,10 +122,10 @@ class ClockViewModel: ObservableObject {
             selectedFont = font
         }
         
-        fontSize = defaults.object(forKey: "fontSize") as? Double ?? 16
-        opacity = defaults.object(forKey: "opacity") as? Double ?? 0.9
-        cornerRadius = defaults.object(forKey: "cornerRadius") as? Double ?? 8
-        padding = defaults.object(forKey: "padding") as? Double ?? 8
+        fontSize = defaults.object(forKey: "fontSize") as? Double ?? 11
+        opacity = defaults.object(forKey: "opacity") as? Double ?? 0.0
+        cornerRadius = defaults.object(forKey: "cornerRadius") as? Double ?? 0
+        padding = defaults.object(forKey: "padding") as? Double ?? 4
     }
     
     func savePreferences() {

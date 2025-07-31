@@ -10,7 +10,7 @@ class WindowManager: ObservableObject {
         let id = UUID()
         let screen: NSScreen
         var isEnabled: Bool = true
-        var position: WindowPosition = .topRight
+        var position: WindowPosition = .menuBarOverlay
         
         enum WindowPosition: String, CaseIterable {
             case topLeft = "Top Left"
@@ -20,6 +20,7 @@ class WindowManager: ObservableObject {
             case bottomRight = "Bottom Right"
             case bottomCenter = "Bottom Center"
             case center = "Center"
+            case menuBarOverlay = "Menu Bar Overlay"
             
             func calculateOrigin(for screenFrame: NSRect, windowSize: NSSize, padding: CGFloat = 20) -> NSPoint {
                 switch self {
@@ -37,6 +38,19 @@ class WindowManager: ObservableObject {
                     return NSPoint(x: screenFrame.midX - windowSize.width / 2, y: screenFrame.minY + padding)
                 case .center:
                     return NSPoint(x: screenFrame.midX - windowSize.width / 2, y: screenFrame.midY - windowSize.height / 2)
+                case .menuBarOverlay:
+                    print("menuBarOverlay")
+                    // We must receive the full frame, not visibleFrame!
+                    let menuBarHeight = screenFrame.height - NSScreen.main!.visibleFrame.height
+                    let rightPadding: CGFloat = 8
+                    let verticalOffset: CGFloat = 2
+                    print("menuBarHeight: \(menuBarHeight)")
+                    print("rightPadding: \(rightPadding)")
+                    print("verticalOffset: \(verticalOffset)")  
+                    return NSPoint(
+                        x: screenFrame.maxX - windowSize.width - rightPadding,
+                        y: screenFrame.maxY - windowSize.height + verticalOffset
+                    )
                 }
             }
         }
@@ -86,8 +100,12 @@ class WindowManager: ObservableObject {
     
     private func createClockWindow(for displaySetting: DisplaySetting) {
         let screen = displaySetting.screen
-        let screenFrame = screen.visibleFrame
-        let windowSize = CGSize(width: 200, height: 50)
+        // Always use full screen frame for menu bar overlay to position at the very top
+        let screenFrame = displaySetting.position == .menuBarOverlay ? screen.frame : screen.visibleFrame
+        // let screenFrame = screen.frame
+
+        // Size to match menu bar clock dimensions
+        let windowSize = CGSize(width: 110, height: 30)
         
         let origin = displaySetting.position.calculateOrigin(
             for: screenFrame,
@@ -161,6 +179,10 @@ class WindowManager: ObservableObject {
                 recreateClockWindows()
             }
         }
+    }
+
+    private func menuBarHeight(for screen: NSScreen) -> CGFloat {
+        return screen.frame.height - screen.visibleFrame.height
     }
     
     func setPosition(_ displayId: UUID, position: DisplaySetting.WindowPosition) {
