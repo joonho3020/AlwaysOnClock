@@ -21,7 +21,6 @@ struct AlwaysOnClockApp: App {
 class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
     static var shared: WindowManager?
-    private var startupManager = StartupManager()
     
     func applicationWillTerminate(_ notification: Notification) {
         // Ensure proper cleanup on app termination
@@ -33,10 +32,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.accessory)
         setupMenuBar()
         setupWindowManager()
-        
-        // Generate app icons (this will create PNG files in Documents folder)
-        // Uncomment the line below to generate icons, then comment it out again
-        // IconGenerator.generateIcons()
     }
     
     private func setupMenuBar() {
