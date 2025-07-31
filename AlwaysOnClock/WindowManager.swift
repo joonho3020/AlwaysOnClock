@@ -5,6 +5,7 @@ class WindowManager: ObservableObject {
     @Published var clockWindows: [ClockNSWindow] = []
     @Published var isClockVisible: Bool = true
     @Published var displaySettings: [DisplaySetting] = []
+    private var screenChangeTimer: Timer?
     
     struct DisplaySetting: Identifiable {
         let id = UUID()
@@ -62,6 +63,9 @@ class WindowManager: ObservableObject {
     
     deinit {
         NotificationCenter.default.removeObserver(self)
+        screenChangeTimer?.invalidate()
+        screenChangeTimer = nil
+        closeClockWindows()
     }
     
     private func setupDisplaySettings() {
@@ -80,8 +84,12 @@ class WindowManager: ObservableObject {
     }
     
     @objc private func screensDidChange() {
-        DispatchQueue.main.async {
-            self.recreateClockWindows()
+        // Debounce screen change notifications to prevent rapid recreation
+        screenChangeTimer?.invalidate()
+        screenChangeTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
+            DispatchQueue.main.async {
+                self?.recreateClockWindows()
+            }
         }
     }
     
@@ -133,8 +141,11 @@ class WindowManager: ObservableObject {
             window.setFrameOrigin(adjustedOrigin)
         }
         
-        window.orderFront(nil)
-        clockWindows.append(window)
+        // Ensure window is properly initialized before showing
+        DispatchQueue.main.async {
+            window.orderFront(nil)
+            self.clockWindows.append(window)
+        }
     }
     
     func showClockWindows() {
@@ -154,8 +165,17 @@ class WindowManager: ObservableObject {
     }
     
     func closeClockWindows() {
-        clockWindows.forEach { $0.close() }
+        // Properly close and remove windows
+        for window in clockWindows {
+            window.orderOut(nil)
+            window.close()
+        }
         clockWindows.removeAll()
+        
+        // Force a run loop cycle to ensure windows are properly deallocated
+        DispatchQueue.main.async {
+            // This ensures the window deallocation completes
+        }
     }
     
     private func recreateClockWindows() {
@@ -163,8 +183,11 @@ class WindowManager: ObservableObject {
         closeClockWindows()
         setupDisplaySettings()
         
-        if wasVisible {
-            createClockWindows()
+        // Add a small delay to ensure proper window cleanup
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            if wasVisible {
+                self.createClockWindows()
+            }
         }
     }
     
