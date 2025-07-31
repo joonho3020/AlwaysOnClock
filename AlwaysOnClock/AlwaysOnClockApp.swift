@@ -23,6 +23,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     static var shared: WindowManager?
     private var startupManager = StartupManager()
     
+    func applicationWillTerminate(_ notification: Notification) {
+        // Ensure proper cleanup on app termination
+        AppDelegate.shared?.closeClockWindows()
+    }
+    
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Hide the dock icon since we're a menu bar app
         NSApp.setActivationPolicy(.accessory)

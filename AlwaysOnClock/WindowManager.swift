@@ -5,6 +5,7 @@ class WindowManager: ObservableObject {
     @Published var clockWindows: [ClockNSWindow] = []
     @Published var isClockVisible: Bool = true
     @Published var displaySettings: [DisplaySetting] = []
+    private var screenChangeTimer: Timer?
     
     struct DisplaySetting: Identifiable {
         let id = UUID()
@@ -23,30 +24,29 @@ class WindowManager: ObservableObject {
             case menuBarOverlay = "Menu Bar Overlay"
             
             func calculateOrigin(for screenFrame: NSRect, windowSize: NSSize, padding: CGFloat = 20) -> NSPoint {
+                // Scale padding based on screen size for better positioning on different monitors
+                let scaledPadding = min(padding, screenFrame.width * 0.02) // Max 2% of screen width
                 switch self {
                 case .topLeft:
-                    return NSPoint(x: screenFrame.minX + padding, y: screenFrame.maxY - windowSize.height - padding)
+                    return NSPoint(x: screenFrame.minX + scaledPadding, y: screenFrame.maxY - windowSize.height - scaledPadding)
                 case .topRight:
-                    return NSPoint(x: screenFrame.maxX - windowSize.width - padding, y: screenFrame.maxY - windowSize.height - padding)
+                    return NSPoint(x: screenFrame.maxX - windowSize.width - scaledPadding, y: screenFrame.maxY - windowSize.height - scaledPadding)
                 case .topCenter:
-                    return NSPoint(x: screenFrame.midX - windowSize.width / 2, y: screenFrame.maxY - windowSize.height - padding)
+                    return NSPoint(x: screenFrame.midX - windowSize.width / 2, y: screenFrame.maxY - windowSize.height - scaledPadding)
                 case .bottomLeft:
-                    return NSPoint(x: screenFrame.minX + padding, y: screenFrame.minY + padding)
+                    return NSPoint(x: screenFrame.minX + scaledPadding, y: screenFrame.minY + scaledPadding)
                 case .bottomRight:
-                    return NSPoint(x: screenFrame.maxX - windowSize.width - padding, y: screenFrame.minY + padding)
+                    return NSPoint(x: screenFrame.maxX - windowSize.width - scaledPadding, y: screenFrame.minY + scaledPadding)
                 case .bottomCenter:
-                    return NSPoint(x: screenFrame.midX - windowSize.width / 2, y: screenFrame.minY + padding)
+                    return NSPoint(x: screenFrame.midX - windowSize.width / 2, y: screenFrame.minY + scaledPadding)
                 case .center:
                     return NSPoint(x: screenFrame.midX - windowSize.width / 2, y: screenFrame.midY - windowSize.height / 2)
                 case .menuBarOverlay:
-                    print("menuBarOverlay")
-                    // We must receive the full frame, not visibleFrame!
-                    let rightPadding: CGFloat = 5
+                    // Scale menu bar padding based on screen size
+                    let scaledRightPadding = min(10.0, screenFrame.width * 0.01) // Max 1% of screen width
                     let verticalOffset: CGFloat = 4
-                    print("rightPadding: \(rightPadding)")
-                    print("verticalOffset: \(verticalOffset)")  
                     return NSPoint(
-                        x: screenFrame.maxX - windowSize.width - rightPadding,
+                        x: screenFrame.maxX - windowSize.width - scaledRightPadding,
                         y: screenFrame.maxY - windowSize.height - verticalOffset
                     )
                 }
@@ -62,6 +62,9 @@ class WindowManager: ObservableObject {
     
     deinit {
         NotificationCenter.default.removeObserver(self)
+        screenChangeTimer?.invalidate()
+        screenChangeTimer = nil
+        closeClockWindows()
     }
     
     private func setupDisplaySettings() {
@@ -80,8 +83,12 @@ class WindowManager: ObservableObject {
     }
     
     @objc private func screensDidChange() {
-        DispatchQueue.main.async {
-            self.recreateClockWindows()
+        // Debounce screen change notifications to prevent rapid recreation
+        screenChangeTimer?.invalidate()
+        screenChangeTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
+            DispatchQueue.main.async {
+                self?.recreateClockWindows()
+            }
         }
     }
     
@@ -98,18 +105,20 @@ class WindowManager: ObservableObject {
     
     private func createClockWindow(for displaySetting: DisplaySetting) {
         let screen = displaySetting.screen
-        // Always use full screen frame for menu bar overlay to position at the very top
-        let screenFrame = displaySetting.position == .menuBarOverlay ? screen.frame : screen.visibleFrame
-        // let screenFrame = screen.frame
-
+        
+        // Use the screen's frame directly for positioning calculations
+        let screenFrame = screen.frame
+        
         // Size to match menu bar clock dimensions
         let windowSize = CGSize(width: 160, height: 30)
         
+        // Calculate position relative to the specific screen
         let origin = displaySetting.position.calculateOrigin(
             for: screenFrame,
             windowSize: windowSize
         )
         
+        // Create window with absolute coordinates
         let window = ClockNSWindow(
             contentRect: NSRect(origin: origin, size: windowSize),
             styleMask: [.borderless, .fullSizeContentView],
@@ -124,17 +133,11 @@ class WindowManager: ObservableObject {
         
         window.contentView = hostingView
         
-        if screen != NSScreen.main, let mainScreen = NSScreen.main {
-            let screenFrame = screen.frame
-            let adjustedOrigin = NSPoint(
-                x: screenFrame.minX + origin.x - mainScreen.frame.minX,
-                y: origin.y
-            )
-            window.setFrameOrigin(adjustedOrigin)
+        // Ensure window is properly initialized before showing
+        DispatchQueue.main.async {
+            window.orderFront(nil)
+            self.clockWindows.append(window)
         }
-        
-        window.orderFront(nil)
-        clockWindows.append(window)
     }
     
     func showClockWindows() {
@@ -154,8 +157,17 @@ class WindowManager: ObservableObject {
     }
     
     func closeClockWindows() {
-        clockWindows.forEach { $0.close() }
+        // Properly close and remove windows
+        for window in clockWindows {
+            window.orderOut(nil)
+            window.close()
+        }
         clockWindows.removeAll()
+        
+        // Force a run loop cycle to ensure windows are properly deallocated
+        DispatchQueue.main.async {
+            // This ensures the window deallocation completes
+        }
     }
     
     private func recreateClockWindows() {
@@ -163,8 +175,11 @@ class WindowManager: ObservableObject {
         closeClockWindows()
         setupDisplaySettings()
         
-        if wasVisible {
-            createClockWindows()
+        // Add a small delay to ensure proper window cleanup
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            if wasVisible {
+                self.createClockWindows()
+            }
         }
     }
     

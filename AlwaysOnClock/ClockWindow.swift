@@ -72,14 +72,17 @@ class ClockNSWindow: NSWindow {
     deinit {
         if let monitor = mouseMonitor {
             NSEvent.removeMonitor(monitor)
+            mouseMonitor = nil
         }
         fullscreenCheckTimer?.invalidate()
+        fullscreenCheckTimer = nil
     }
 
     private func setupFullscreenMonitoring() {
-        // Check fullscreen state every 0.5 seconds
+        // Check fullscreen state every 0.2 seconds
         fullscreenCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { [weak self] _ in
-            self?.updateWindowVisibility()
+            guard let self = self else { return }
+            self.updateWindowVisibility()
         }
     }
     
