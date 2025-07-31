@@ -51,6 +51,7 @@ class ClockNSWindow: NSWindow {
     override var canBecomeMain: Bool { false }
     
     private var mouseMonitor: Any?
+    private var fullscreenCheckTimer: Timer?
     private let hideThreshold: CGFloat = 35 // Hide when mouse is within this distance from top
     
     override init(contentRect: NSRect, styleMask style: NSWindow.StyleMask, backing backingStoreType: NSWindow.BackingStoreType, defer flag: Bool) {
@@ -65,44 +66,55 @@ class ClockNSWindow: NSWindow {
         self.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
         
         setupMouseTracking()
+        setupFullscreenMonitoring()
     }
     
     deinit {
         if let monitor = mouseMonitor {
             NSEvent.removeMonitor(monitor)
         }
+        fullscreenCheckTimer?.invalidate()
+    }
+
+    private func setupFullscreenMonitoring() {
+        // Check fullscreen state every 0.5 seconds
+        fullscreenCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+            self?.updateWindowVisibility()
+        }
+    }
+    
+    private func updateWindowVisibility() {
+        let mouseLocation = NSEvent.mouseLocation
+        let screenFrame = self.screen?.frame ?? NSScreen.main?.frame ?? NSRect.zero
+        
+        // Calculate distance from top of screen
+        let distanceFromTop = screenFrame.maxY - mouseLocation.y
+        
+        // Check if current space is fullscreen
+        let isFullscreen = isCurrentSpaceFullscreen()
+
+        // print("distanceFromTop: \(distanceFromTop)")
+        // if isFullscreen {
+        //     print("Current Space is fullscreen")
+        // } else {
+        //     print("Current Space is NOT fullscreen")
+        // }
+        
+        DispatchQueue.main.async {
+            if distanceFromTop <= self.hideThreshold || !isFullscreen {
+                // Mouse is near the top OR in fullscreen space - hide the window
+                self.orderOut(nil)
+            } else {
+                // Mouse is away from top AND not in fullscreen space - show the window
+                self.orderFront(nil)
+            }
+        }
     }
 
     private func setupMouseTracking() {
         mouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: .mouseMoved) { [weak self] event in
             guard let self = self else { return }
-            
-            let mouseLocation = NSEvent.mouseLocation
-            let screenFrame = self.screen?.frame ?? NSScreen.main?.frame ?? NSRect.zero
-            
-            // Calculate distance from top of screen
-            let distanceFromTop = screenFrame.maxY - mouseLocation.y
-            
-            // Detect if the menu-bar is currently visible on-screen (works for both
-            // always-visible and auto-hide cases).
-            let isFullscreen = isCurrentSpaceFullscreen()
-            if isFullscreen {
-                print("Current Space is fullscreen")
-            } else {
-                print("Current Space is NOT fullscreen")
-            }
-      
-            if distanceFromTop <= self.hideThreshold || !isFullscreen {
-                // Mouse is near the top OR menu bar is visible - hide the window
-                DispatchQueue.main.async {
-                    self.orderOut(nil)
-                }
-            } else {
-                // Mouse is away from top AND menu bar is hidden - show the window
-                DispatchQueue.main.async {
-                    self.orderFront(nil)
-                }
-            }
+            self.updateWindowVisibility()
         }
     }
 }
