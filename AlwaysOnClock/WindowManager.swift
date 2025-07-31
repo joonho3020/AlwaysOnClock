@@ -103,7 +103,7 @@ class WindowManager: ObservableObject {
         // let screenFrame = screen.frame
 
         // Size to match menu bar clock dimensions
-        let windowSize = CGSize(width: 150, height: 30)
+        let windowSize = CGSize(width: 160, height: 30)
         
         let origin = displaySetting.position.calculateOrigin(
             for: screenFrame,

@@ -4,18 +4,21 @@ import AppKit
 struct SettingsView: View {
     @ObservedObject var windowManager: WindowManager
     @StateObject private var clockViewModel = ClockViewModel()
+    @StateObject private var startupManager = StartupManager()
     @State private var selectedTab: SettingsTab = .appearance
     
     enum SettingsTab: String, CaseIterable {
         case appearance = "Appearance"
         case format = "Format"
         case displays = "Displays"
+        case general = "General"
         
         var systemImage: String {
             switch self {
             case .appearance: return "paintbrush"
             case .format: return "textformat"
             case .displays: return "display.2"
+            case .general: return "gear"
             }
         }
     }
@@ -37,6 +40,8 @@ struct SettingsView: View {
                     FormatSettingsView(clockViewModel: clockViewModel)
                 case .displays:
                     DisplaySettingsView(windowManager: windowManager)
+                case .general:
+                    GeneralSettingsView(startupManager: startupManager)
                 }
             }
             .frame(minWidth: 400, maxWidth: .infinity, minHeight: 300, maxHeight: .infinity)
@@ -172,6 +177,55 @@ struct DisplaySettingsView: View {
                         }
                     }
                     .padding(.vertical, 4)
+                }
+            }
+        }
+        .padding()
+    }
+}
+
+struct GeneralSettingsView: View {
+    @ObservedObject var startupManager: StartupManager
+    
+    var body: some View {
+        Form {
+            Section("Startup") {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Image(systemName: "power")
+                            .foregroundColor(.blue)
+                        Text("Launch at Login")
+                            .font(.headline)
+                        Spacer()
+                        Toggle("", isOn: Binding(
+                            get: { startupManager.isStartupEnabled },
+                            set: { _ in startupManager.toggleStartup() }
+                        ))
+                        .labelsHidden()
+                    }
+                    
+                    Text("Automatically start Always On Clock when you log in to your Mac")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            
+            Section("About") {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Image(systemName: "clock")
+                            .foregroundColor(.blue)
+                        Text("Always On Clock")
+                            .font(.headline)
+                    }
+                    
+                    Text("Version 1.0")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    Text("A simple, always-on clock display for macOS")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
             }
         }

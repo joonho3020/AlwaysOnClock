@@ -21,12 +21,17 @@ struct AlwaysOnClockApp: App {
 class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
     static var shared: WindowManager?
+    private var startupManager = StartupManager()
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Hide the dock icon since we're a menu bar app
         NSApp.setActivationPolicy(.accessory)
         setupMenuBar()
         setupWindowManager()
+        
+        // Generate app icons (this will create PNG files in Documents folder)
+        // Uncomment the line below to generate icons, then comment it out again
+        // IconGenerator.generateIcons()
     }
     
     private func setupMenuBar() {
