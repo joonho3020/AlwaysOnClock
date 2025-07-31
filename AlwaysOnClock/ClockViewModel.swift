@@ -9,7 +9,7 @@ class ClockViewModel: ObservableObject {
     @Published var showDayOfWeek: Bool = false
     @Published var customFormat: String = ""
     @Published var useCustomFormat: Bool = false
-    @Published var selectedFont: ClockFont = .sfPro
+    @Published var selectedFont: ClockFont = .system
     @Published var fontSize: Double = 11
     @Published var textColor: Color = .white
     @Published var backgroundColor: Color = .clear
@@ -113,7 +113,7 @@ class ClockViewModel: ObservableObject {
         
         showSeconds = defaults.object(forKey: "showSeconds") as? Bool ?? false
         showDate = defaults.object(forKey: "showDate") as? Bool ?? true
-        showDayOfWeek = defaults.object(forKey: "showDayOfWeek") as? Bool ?? false
+        showDayOfWeek = defaults.object(forKey: "showDayOfWeek") as? Bool ?? true
         customFormat = defaults.object(forKey: "customFormat") as? String ?? ""
         useCustomFormat = defaults.object(forKey: "useCustomFormat") as? Bool ?? false
         

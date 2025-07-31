@@ -41,15 +41,13 @@ class WindowManager: ObservableObject {
                 case .menuBarOverlay:
                     print("menuBarOverlay")
                     // We must receive the full frame, not visibleFrame!
-                    let menuBarHeight = screenFrame.height - NSScreen.main!.visibleFrame.height
-                    let rightPadding: CGFloat = 8
-                    let verticalOffset: CGFloat = 2
-                    print("menuBarHeight: \(menuBarHeight)")
+                    let rightPadding: CGFloat = 5
+                    let verticalOffset: CGFloat = 3
                     print("rightPadding: \(rightPadding)")
                     print("verticalOffset: \(verticalOffset)")  
                     return NSPoint(
                         x: screenFrame.maxX - windowSize.width - rightPadding,
-                        y: screenFrame.maxY - windowSize.height + verticalOffset
+                        y: screenFrame.maxY - windowSize.height - verticalOffset
                     )
                 }
             }

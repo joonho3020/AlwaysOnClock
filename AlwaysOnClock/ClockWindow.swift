@@ -51,7 +51,6 @@ class ClockNSWindow: NSWindow {
     override var canBecomeMain: Bool { false }
     
     private var mouseMonitor: Any?
-    private let menuBarHeight: CGFloat = 30 // Approximate menu bar height
     private let hideThreshold: CGFloat = 35 // Hide when mouse is within this distance from top
     
     override init(contentRect: NSRect, styleMask style: NSWindow.StyleMask, backing backingStoreType: NSWindow.BackingStoreType, defer flag: Bool) {
@@ -73,9 +72,7 @@ class ClockNSWindow: NSWindow {
             NSEvent.removeMonitor(monitor)
         }
     }
-    
 
-    
     private func setupMouseTracking() {
         mouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: .mouseMoved) { [weak self] event in
             guard let self = self else { return }
@@ -107,44 +104,5 @@ class ClockNSWindow: NSWindow {
                 }
             }
         }
-    }
-
-    /// Returns true when the current space has a permanent menu-bar
-    /// (i.e. we’re *not* in a macOS full-screen space).
-    private func isMenuBarAlwaysPresent(on screen: NSScreen?) -> Bool {
-        guard let s = screen ?? NSScreen.main else { return false }
-
-        print("s.frame.height: \(s.frame.height)")
-        print("s.visibleFrame.height: \(s.visibleFrame.height)")
-        // The visible frame excludes the areas reserved for the Dock and menubar.
-        // • In a normal desktop:           frame.height  > visibleFrame.height
-        // • In an auto-hidden menubar:     the same difference exists
-        // • In a true full-screen space:   frame == visibleFrame  (difference ≈ 0)
-        return (s.frame.height - s.visibleFrame.height) > 1   // 1-pt tolerance
-    }
-    
-    private func isMenuBarVisible() -> Bool {
-        // Check if the menu bar is visible by looking for menu bar windows
-        let options = CGWindowListOption(arrayLiteral: .optionOnScreenOnly, .excludeDesktopElements)
-        let windowList = CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[String: Any]] ?? []
-        
-        let screenFrame = self.screen?.frame ?? NSScreen.main?.frame ?? NSRect.zero
-        
-        for windowInfo in windowList {
-            if let ownerName = windowInfo[kCGWindowOwnerName as String] as? String,
-               ownerName == "SystemUIServer",
-               let layer = windowInfo[kCGWindowLayer as String] as? Int,
-               layer == Int(CGWindowLevelForKey(.mainMenuWindow)),
-               let alpha = windowInfo[kCGWindowAlpha as String] as? Double, alpha > 0.01,
-               let bounds = windowInfo[kCGWindowBounds as String] as? [String: Any],
-               let y = bounds["Y"] as? CGFloat,
-               let height = bounds["Height"] as? CGFloat {
-                // Ensure the window sits at the very top of the screen and has some height ( > 10 pt )
-                if abs(y - (screenFrame.maxY - height)) < 5.0 && height > 10 {
-                    return true
-                }
-            }
-        }
-        return false
     }
 }
